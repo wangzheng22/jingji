@@ -19,22 +19,14 @@ cd jingji
 python3 -m http.server 8080
 ```
 
-浏览器打开 <http://localhost:8080> 即可预览。
+浏览器打开 <http://localhost:8080> 即可预览（**默认打开登录页**）。
 
-## 本地预览
-
-```bash
-cd 经济标
-python3 -m http.server 8080
-```
-
-浏览器打开：<http://localhost:8080>
-
-## 文件说明
+## 页面结构
 
 | 文件 | 说明 |
 |------|------|
-| `index.html` | 页面结构 |
-| `styles.css` | 样式 |
-| `app.js` | 示例数据与交互 |
+| `index.html` | **登录页**（入口，提交后进入首页） |
+| `home.html` | 智能辅助评标 / 投标人评审汇总（原首页） |
+| `styles.css` | 公共样式 |
+| `app.js` | 首页数据与交互 |
 | `assets/` | 图标与背景资源 |

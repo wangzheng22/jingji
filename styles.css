@@ -625,3 +625,106 @@ button {
   padding: 0 4px;
   color: #bfbfbf;
 }
+
+/* ---------- 登录页 ---------- */
+body.login-page {
+  overflow: auto;
+  min-height: 100%;
+}
+
+.login-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 40px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 32px 28px 28px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(8, 29, 82, 0.08);
+  border: 1px solid #ebeef5;
+}
+
+.login-card__title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.login-card__desc {
+  margin: 0 0 24px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.login-field__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.login-field__input {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--color-text);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.login-field__input::placeholder {
+  color: #9ca3af;
+}
+
+.login-field__input:hover {
+  border-color: #9ca3af;
+}
+
+.login-field__input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.15);
+}
+
+.btn--login-submit {
+  margin-top: 8px;
+  width: 100%;
+  height: 42px;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  background: linear-gradient(180deg, #ff6272 0%, #f41818 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(244, 24, 24, 0.35);
+  transition: filter 0.15s, box-shadow 0.15s;
+}
+
+.btn--login-submit:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 6px 16px rgba(244, 24, 24, 0.45);
+}

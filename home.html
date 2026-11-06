@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>经济标 · 智能辅助评标 - 投标人评审汇总</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="top-bar">
+      <div class="top-bar__inner">
+        <div class="top-bar__brand">
+          <img
+            class="top-bar__logo"
+            src="assets/logo.png"
+            width="18"
+            height="21"
+            alt="广联达"
+          />
+          <img
+            class="top-bar__title-img"
+            src="assets/title.png"
+            width="120"
+            height="16"
+            alt="智能辅助评标"
+          />
+          <span class="top-bar__project"
+            >北京信息科技大学新校区建设工程第一教学组团项目幕墙工程</span
+          >
+        </div>
+        <nav class="top-bar__actions">
+          <a href="#" class="doc-link">
+            <img
+              class="doc-link__icon"
+              src="assets/icon-bid-doc.png"
+              width="14"
+              height="16"
+              alt=""
+            />
+            招标文件
+          </a>
+          <a href="#" class="doc-link">
+            <img
+              class="doc-link__icon"
+              src="assets/icon-tender-doc.png"
+              width="14"
+              height="16"
+              alt=""
+            />
+            投标文件
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="alert-card">
+        <div class="alert-card__icon" aria-hidden="true">
+          <img
+            class="alert-card__icon-img"
+            src="assets/alert-icon.png"
+            width="105"
+            height="111"
+            alt=""
+          />
+        </div>
+        <div class="alert-card__body">
+          <p class="alert-card__headline">
+            建议质询单位 <strong class="highlight-num">5</strong> 家
+          </p>
+          <p class="alert-card__reason">
+            推荐理由：严重异常清单对应报价合计占投标报价总额比重=5%，各投标单位严重异常清单报价合计143万~213万
+          </p>
+        </div>
+        <button type="button" class="btn btn--primary">
+          <span id="btn-primary-label">一键质询</span>
+          <span class="btn--primary__icon-wrap" aria-hidden="true">
+            <img
+              class="btn--primary__icon"
+              src="assets/btn-inquiry-icon.png"
+              width="14"
+              height="14"
+              alt=""
+            />
+          </span>
+        </button>
+      </section>
+
+      <section class="summary-panel">
+        <div class="summary-panel__header">
+          <h1 class="summary-panel__title">
+            投标人评审汇总
+            <span class="summary-panel__count">
+              <span id="summary-total">共 5 家</span>
+              <span class="summary-panel__count-sep">，</span>
+              <span id="summary-selected">已选 5 家</span>
+            </span>
+          </h1>
+          <button type="button" class="btn btn--outline">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M8 2v8m0 0l3-3m-3 3L5 7M3 12v1a1 1 0 001 1h8a1 1 0 001-1v-1"
+                stroke="currentColor"
+                stroke-width="1.4"
+                stroke-linecap="round"
+              />
+            </svg>
+            导出报告
+          </button>
+        </div>
+
+        <div class="bid-table-shell">
+          <div class="bid-table-head">
+            <span class="col col--check">
+              <input
+                type="checkbox"
+                id="check-all"
+                aria-label="全选当前页"
+              />
+            </span>
+            <span class="col col--name">投标单位</span>
+            <span class="col col--total">报价总额</span>
+            <span class="col col--abnormal">异常金额</span>
+            <span class="col col--issues">问题分布</span>
+            <span class="col col--breakdown">异常清单分布</span>
+          </div>
+          <div class="bid-table-scroll" id="bid-table-scroll">
+            <div class="bid-table-body" id="bidder-rows"></div>
+          </div>
+          <footer class="table-footer">
+            <p class="table-footer__total">
+              共 <span id="total-count">0</span> 条数据
+            </p>
+            <div class="table-footer__right">
+              <label class="page-size">
+                每页
+                <select id="page-size" aria-label="每页条数">
+                  <option value="10" selected>10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+                条
+              </label>
+              <nav class="pagination" id="pagination" aria-label="分页"></nav>
+            </div>
+          </footer>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
