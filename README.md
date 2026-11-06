@@ -6,7 +6,12 @@
 
 仓库地址：**https://github.com/wangzheng22/jingji**
 
-同事克隆后预览：
+**在线预览（推代码后约 1～2 分钟生效）：**  
+https://wangzheng22.github.io/jingji/
+
+> 若首次打开 404：到仓库 **Settings → Pages → Build and deployment → Source** 选 **GitHub Actions**，保存后再等一次部署完成。
+
+同事也可克隆后本地预览：
 
 ```bash
 git clone https://github.com/wangzheng22/jingji.git
