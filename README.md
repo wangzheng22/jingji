@@ -4,20 +4,13 @@
 
 ## 上传到 GitHub（分享给同事）
 
-1. 在 [GitHub 新建仓库](https://github.com/new)，名称建议 **`jingji-biao`**（描述可写「经济标演示页」），选 **Public** 便于同事 clone。
-2. 在本目录执行（把 `你的用户名` 换成你的 GitHub 账号）：
+仓库地址：**https://github.com/wangzheng22/jingji**
+
+同事克隆后预览：
 
 ```bash
-cd "/Users/glodon/Documents/01广联达/01产品/18智能评标/经济标/经济标"
-git remote add origin https://github.com/你的用户名/jingji-biao.git
-git push -u origin main
-```
-
-3. 把仓库链接发给同事。同事克隆后：
-
-```bash
-git clone https://github.com/你的用户名/jingji-biao.git
-cd jingji-biao
+git clone https://github.com/wangzheng22/jingji.git
+cd jingji
 python3 -m http.server 8080
 ```
 
