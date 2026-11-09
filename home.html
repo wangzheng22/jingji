@@ -7,6 +7,24 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div
+      id="scan-overlay"
+      class="scan-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="scan-overlay-title"
+      hidden
+    >
+      <div class="scan-overlay__panel">
+        <p id="scan-overlay-title" class="scan-overlay__title">智能评审扫描中</p>
+        <p class="scan-overlay__subtitle">共 50 家投标单位，逐个校验…</p>
+        <p class="scan-overlay__progress">
+          <span id="scan-progress-curr">0</span> / <span id="scan-progress-total">50</span>
+        </p>
+        <div class="scan-overlay__list" id="scan-list"></div>
+      </div>
+    </div>
+
     <header class="top-bar">
       <div class="top-bar__inner">
         <div class="top-bar__brand">
@@ -65,8 +83,13 @@
           />
         </div>
         <div class="alert-card__body">
-          <p class="alert-card__headline">
-            建议质询单位 <strong class="highlight-num">5</strong> 家
+          <p class="alert-card__headline" id="alert-inquiry-headline">
+            建议质询单位 <strong class="highlight-num" id="alert-inquiry-count">0</strong> 家<span
+              id="alert-selected-suffix"
+              class="alert-card__selected-suffix"
+              hidden
+              >，您已选 <strong id="alert-selected-inline">0</strong> 家</span
+            >
           </p>
           <p class="alert-card__reason">
             推荐理由：严重异常清单对应报价合计占投标报价总额比重=5%，各投标单位严重异常清单报价合计143万~213万
