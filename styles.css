@@ -27,6 +27,38 @@
   --ease-row-enter: cubic-bezier(0.22, 1, 0.36, 1);
   --font: "Microsoft YaHei", "微软雅黑", "PingFang SC", -apple-system,
     BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  --scrollbar-size: 6px;
+  --scrollbar-thumb: rgba(0, 0, 0, 0.22);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.35);
+  --scrollbar-track: transparent;
+}
+
+/* 细长滚动条：Chromium / Safari / Edge + Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 html {
@@ -1388,10 +1420,10 @@ body.login-page {
 .inquiry-unit__items {
   display: none;
   margin: 0 0 12px 48px;
-  padding: 4px 0;
+  padding: 8px;
   border: 1px solid #e8e8e8;
   border-radius: 4px;
-  background: #fafafa;
+  background: #f5f5f5;
 }
 
 .inquiry-unit.is-open .inquiry-unit__items {
@@ -1403,11 +1435,13 @@ body.login-page {
   align-items: flex-start;
   gap: 8px;
   padding: 10px 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  background: #ffffff;
 }
 
-.inquiry-item:last-child {
-  border-bottom: none;
+.inquiry-item + .inquiry-item {
+  margin-top: 6px;
 }
 
 .inquiry-item__main {
@@ -1421,6 +1455,20 @@ body.login-page {
 .inquiry-item__code {
   color: #595959;
   margin-right: 6px;
+}
+
+/* 二级清单未勾选：卡片与文字变灰 */
+.inquiry-item:has(.inquiry-item__check:not(:checked)) {
+  background: #ebebeb;
+  border-color: #dedede;
+}
+
+.inquiry-item:has(.inquiry-item__check:not(:checked)) .inquiry-item__main {
+  color: #bfbfbf;
+}
+
+.inquiry-item:has(.inquiry-item__check:not(:checked)) .inquiry-item__code {
+  color: #c8c8c8;
 }
 
 .inquiry-dialog__foot {
