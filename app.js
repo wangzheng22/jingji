@@ -72,15 +72,72 @@ function buildBreakdown(id, abnormalWan) {
   return items;
 }
 
-function buildIssues(id, abnormalWan, totalWan) {
-  const n1 = 3 + (id % 6);
-  const n2 = 2 + (id % 5);
-  const pct = ((abnormalWan / totalWan) * 100).toFixed(1);
-  const p2 = ((45 + (id % 50)) / 10).toFixed(1);
+function buildIssuesLineHtml(label, count, pct) {
+  const p = Number(pct).toFixed(1);
   return (
-    `异常清单${n1}条，报价占比${pct}% ` +
-    `主材消耗量&综合单价均异常清单${n2}条，报价占比${p2}%`
+    `${escapeHtml(label)}` +
+    `<strong class="issues-num">${count}</strong>条，报价占比` +
+    `<strong class="issues-num">${p}%</strong>`
   );
+}
+
+/** 异常类型统计四个维度，每维度一行；按单位展示 1～4 个维度 */
+const ISSUE_DIMENSIONS = [
+  "异常清单",
+  "主材消耗量异常清单",
+  "综合单价异常清单",
+  "主材消耗量&综合单价均异常清单",
+];
+
+function issueDetailMetrics(id, totalItems, totalPct) {
+  const nMat = 1;
+  const nPrice = 1;
+  const nBoth = Math.max(1, totalItems - nMat - nPrice);
+  const pMat = Number(Math.max(0.3, totalPct * 0.14).toFixed(1));
+  const pPrice = Number(Math.max(0.2, totalPct * 0.06).toFixed(1));
+  const pBoth = Number(Math.max(0, totalPct - pMat - pPrice).toFixed(1));
+  const mix = 0.18 + seededUnit(id, 41) * 0.12;
+  const pMat3 = Number(Math.max(0.5, totalPct * mix).toFixed(1));
+  const pPrice3 = Number(Math.max(0, totalPct - pMat3).toFixed(1));
+
+  return {
+    summary: { count: totalItems, pct: totalPct },
+    mat: { count: nMat, pct: pMat },
+    matShort: { count: nMat, pct: pMat3 },
+    price: { count: nPrice, pct: pPrice },
+    priceTail: { count: Math.max(1, totalItems - nMat), pct: pPrice3 },
+    both: { count: nBoth, pct: pBoth },
+    matOnly: { count: totalItems, pct: totalPct },
+  };
+}
+
+function buildIssues(id, abnormalWan, totalWan) {
+  const totalPct = Number(((abnormalWan / totalWan) * 100).toFixed(1));
+  const totalItems = 5;
+  const visibleCount = 1 + (id % 4);
+  const m = issueDetailMetrics(id, totalItems, totalPct);
+
+  const rowMetrics = [
+    [m.summary],
+    [m.summary, m.matOnly],
+    [m.summary, m.matShort, m.priceTail],
+    [m.summary, m.mat, m.price, m.both],
+  ][visibleCount - 1];
+
+  function plainLine(label, count, pct) {
+    const p = Number(pct).toFixed(1);
+    return `${label}${count}条，报价占比${p}%`;
+  }
+
+  const lines = rowMetrics.map((item, i) => ({
+    text: plainLine(ISSUE_DIMENSIONS[i], item.count, item.pct),
+    html: buildIssuesLineHtml(ISSUE_DIMENSIONS[i], item.count, item.pct),
+  }));
+
+  return {
+    issuesText: lines.map((l) => l.text).join("\n"),
+    issuesHtml: lines.map((l) => l.html).join("<br>"),
+  };
 }
 
 function isScanFailed(id) {
@@ -101,8 +158,9 @@ function createBidder(id) {
     id,
     name: id <= BIDDER_NAMES.length ? name : `${name}（联合体${String(id).slice(-1)}）`,
     total: formatWan(totalWan),
+    abnormalWan,
     abnormal: formatWan(abnormalWan),
-    issues: buildIssues(id, abnormalWan, totalWan),
+    ...buildIssues(id, abnormalWan, totalWan),
     breakdown: buildBreakdown(id, abnormalWan),
     checked: true,
     failed,
@@ -120,7 +178,11 @@ let RECOMMENDED_INQUIRY_COUNT = 0;
 
 const listState = {
   page: 1,
-  pageSize: 10,
+  pageSize: 20,
+  /** 与智能监管一致：sortKey + sortDir */
+  sortKey: "",
+  /** @type {'' | 'asc' | 'desc'} */
+  sortDir: "",
 };
 
 function renderBreakdownHtml(items) {
@@ -129,13 +191,13 @@ function renderBreakdownHtml(items) {
       (item) =>
         `${escapeHtml(item.label)} <span class="amount">${escapeHtml(item.amount)}(${escapeHtml(item.pct)})</span>`
     )
-    .join("<br>");
+    .join('<span class="breakdown-sep">；</span>');
 }
 
 function breakdownText(items) {
   return items
     .map((item) => `${item.label} ${item.amount}(${item.pct})`)
-    .join(" ");
+    .join("；");
 }
 
 function escapeHtml(str) {
@@ -146,13 +208,104 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;");
 }
 
+function isCellOverflowing(el) {
+  if (!el) return false;
+  return (
+    el.scrollWidth > el.clientWidth + 1 ||
+    el.scrollHeight > el.clientHeight + 1
+  );
+}
+
+function syncRowOverflowTitles(row, bidder) {
+  if (!row || !bidder) return;
+
+  const nameText = row.querySelector(".bidder-name-cell__text");
+  const nameCol = row.querySelector(".col--name");
+  if (nameText && nameCol) {
+    if (isCellOverflowing(nameText)) nameCol.title = bidder.name;
+    else nameCol.removeAttribute("title");
+  }
+
+  const pairs = [[".col--issues-inner", bidder.issuesText]];
+  pairs.forEach(([selector, text]) => {
+    const el = row.querySelector(selector);
+    if (!el) return;
+    const cell = el.closest(".col--issues") || el;
+    if (isCellOverflowing(el)) cell.title = text;
+    else cell.removeAttribute("title");
+  });
+
+  const breakdownCell = row.querySelector(".col--breakdown");
+  const breakdownInner = row.querySelector(".col--breakdown-inner");
+  if (breakdownCell && breakdownInner) {
+    const full = breakdownText(bidder.breakdown);
+    if (isCellOverflowing(breakdownInner)) breakdownCell.title = full;
+    else breakdownCell.removeAttribute("title");
+  }
+}
+
 function getTotalPages() {
   return Math.max(1, Math.ceil(bidders.length / listState.pageSize));
 }
 
+function getAbnormalWan(bidder) {
+  if (typeof bidder.abnormalWan === "number" && !Number.isNaN(bidder.abnormalWan)) {
+    return bidder.abnormalWan;
+  }
+  const digits = String(bidder.abnormal || "").replace(/[^\d]/g, "");
+  return digits ? Number(digits) : 0;
+}
+
+function getSortedBidders() {
+  const list = bidders.slice();
+  if (listState.sortKey === "abnormal" && listState.sortDir) {
+    const dir = listState.sortDir === "asc" ? 1 : -1;
+    list.sort((a, b) => (getAbnormalWan(a) - getAbnormalWan(b)) * dir);
+  }
+  return list;
+}
+
 function getPageRows() {
   const start = (listState.page - 1) * listState.pageSize;
-  return bidders.slice(start, start + listState.pageSize);
+  return getSortedBidders().slice(start, start + listState.pageSize);
+}
+
+function syncAbnormalSortHeader() {
+  const btn = document.getElementById("sort-abnormal");
+  if (!btn) return;
+
+  const active = listState.sortKey === "abnormal" && listState.sortDir;
+  btn.classList.toggle("is-on", Boolean(active));
+  const ico = btn.querySelector(".sort-ico");
+  if (ico) {
+    ico.classList.remove("asc", "desc");
+    if (active) ico.classList.add(listState.sortDir);
+  }
+  btn.setAttribute(
+    "aria-sort",
+    active
+      ? listState.sortDir === "asc"
+        ? "ascending"
+        : "descending"
+      : "none"
+  );
+}
+
+function cycleAbnormalSort() {
+  const key = "abnormal";
+  if (listState.sortKey !== key) {
+    listState.sortKey = key;
+    listState.sortDir = "desc";
+  } else if (listState.sortDir === "desc") {
+    listState.sortDir = "asc";
+  } else {
+    listState.sortKey = "";
+    listState.sortDir = "";
+  }
+  listState.page = 1;
+  syncAbnormalSortHeader();
+  renderRows();
+  document.getElementById("bid-table-scroll")?.scrollTo({ top: 0 });
 }
 
 function syncHeaderCheckbox() {
@@ -192,10 +345,14 @@ function syncSelectionUI() {
   const selected = getSelectedCount();
 
   const totalEl = document.getElementById("summary-total");
-  if (totalEl) totalEl.textContent = `共 ${total} 家`;
+  if (totalEl) {
+    totalEl.innerHTML = `共 <strong class="summary-panel__num">${total}</strong> 家`;
+  }
 
   const selectedEl = document.getElementById("summary-selected");
-  if (selectedEl) selectedEl.textContent = `已选 ${selected} 家`;
+  if (selectedEl) {
+    selectedEl.innerHTML = `已选 <strong class="summary-panel__num">${selected}</strong> 家`;
+  }
 
   const labelEl = document.getElementById("btn-primary-label");
   if (labelEl) {
@@ -237,20 +394,42 @@ function renderRows() {
   if (!container) return;
 
   const rows = getPageRows();
+  const motionOk = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   container.innerHTML = rows
     .map(
-      (b) => `
-    <article class="bid-row ${b.checked ? "is-selected" : "is-unselected"}" data-id="${b.id}">
+      (b, i) => `
+    <article class="bid-row ${motionOk ? "bid-row--enter " : ""}${b.checked ? "is-selected" : "is-unselected"}" data-id="${b.id}" style="--enter-i: ${i}">
       <div class="col col--check">
         <input type="checkbox" class="bid-row__check" ${b.checked ? "checked" : ""} aria-label="选择${escapeHtml(b.name)}" />
       </div>
-      <div class="col col--name" title="${escapeHtml(b.name)}">${escapeHtml(b.name)}</div>
+      <div class="col col--name">
+        <span class="bidder-name-cell">
+          <span class="bidder-name-cell__icon-wrap" aria-hidden="true">
+            <img
+              class="bidder-name-cell__icon bidder-name-cell__icon--off"
+              src="assets/企业@2x.png"
+              width="16"
+              height="16"
+              alt=""
+            />
+            <img
+              class="bidder-name-cell__icon bidder-name-cell__icon--on"
+              src="assets/企业选中@2x.png"
+              width="16"
+              height="16"
+              alt=""
+            />
+          </span>
+          <span class="bidder-name-cell__text">${escapeHtml(b.name)}</span>
+        </span>
+      </div>
       <div class="col col--total">${escapeHtml(b.total)}</div>
       <div class="col col--abnormal">${escapeHtml(b.abnormal)}</div>
-      <div class="col col--issues" title="${escapeHtml(b.issues)}">${escapeHtml(b.issues)}</div>
+      <div class="col col--issues">
+        <div class="col--issues-inner">${b.issuesHtml}</div>
+      </div>
       <div class="col col--breakdown">
         <div class="col--breakdown-inner">${renderBreakdownHtml(b.breakdown)}</div>
-        <span class="col--breakdown-more" hidden aria-hidden="true">更多…</span>
       </div>
     </article>
   `
@@ -258,19 +437,21 @@ function renderRows() {
     .join("");
 
   requestAnimationFrame(() => {
-    container.querySelectorAll(".col--breakdown").forEach((cell) => {
-      const row = cell.closest(".bid-row");
-      const id = Number(row?.dataset?.id);
+    const rowEls = container.querySelectorAll(".bid-row");
+    rowEls.forEach((row) => {
+      const id = Number(row.dataset.id);
       const bidder = bidders.find((x) => x.id === id);
-      const inner = cell.querySelector(".col--breakdown-inner");
-      const more = cell.querySelector(".col--breakdown-more");
-      if (!inner || !more || !bidder) return;
-
-      const full = breakdownText(bidder.breakdown);
-      const overflow = inner.scrollHeight > inner.clientHeight + 1;
-      more.hidden = !overflow;
-      cell.title = full;
+      syncRowOverflowTitles(row, bidder);
     });
+    if (motionOk && rowEls.length > 0) {
+      const stagger = 56;
+      const duration = 560;
+      const lastEnd =
+        (rowEls.length - 1) * stagger + duration + 40;
+      setTimeout(() => {
+        rowEls.forEach((row) => row.classList.remove("bid-row--enter"));
+      }, lastEnd);
+    }
   });
 
   const totalEl = document.getElementById("total-count");
@@ -279,6 +460,7 @@ function renderRows() {
   renderPagination();
   syncHeaderCheckbox();
   syncSelectionUI();
+  syncAbnormalSortHeader();
 }
 
 function renderPagination() {
@@ -346,6 +528,14 @@ document.getElementById("pagination")?.addEventListener("click", (e) => {
   document.getElementById("bid-table-scroll")?.scrollTo({ top: 0 });
 });
 
+document.getElementById("bid-table-scroll")?.addEventListener("click", (e) => {
+  const sortBtn = e.target.closest("[data-sort]");
+  if (!sortBtn) return;
+  e.preventDefault();
+  e.stopPropagation();
+  cycleAbnormalSort();
+});
+
 document.getElementById("page-size")?.addEventListener("change", (e) => {
   listState.pageSize = Number(e.target.value);
   listState.page = 1;
@@ -380,13 +570,263 @@ document.getElementById("bidder-rows")?.addEventListener("click", (e) => {
   applyRowChecked(row, !input.checked);
 });
 
+const INQUIRY_ITEM_CATALOG = [
+  { code: "011201001001", name: "墙面一般抹灰 1:3水泥砂浆18厚" },
+  { code: "011201001002", name: "墙面一般抹灰 1:2.5水泥砂浆20厚" },
+  { code: "011201001003", name: "天棚一般抹灰 1:3水泥砂浆15厚" },
+  { code: "010503001001", name: "实心砖墙 MU10砖 M7.5水泥砂浆" },
+  { code: "010401001001", name: "混凝土矩形柱 C30" },
+  { code: "03B001001001", name: "幕墙龙骨 热镀锌钢立柱" },
+  { code: "03B002001001", name: "玻璃幕墙面板 中空Low-E" },
+  { code: "011702001001", name: "脚手架 外墙装饰用" },
+];
+
+let inquiryModalUnits = [];
+
+function buildInquiryItemsForBidder(bidder) {
+  const itemCount = 5;
+  const items = [];
+  for (let i = 0; i < itemCount; i += 1) {
+    const cat = INQUIRY_ITEM_CATALOG[(bidder.id + i) % INQUIRY_ITEM_CATALOG.length];
+    items.push({
+      id: `${bidder.id}-${i}`,
+      code: cat.code,
+      name: cat.name,
+      checked: true,
+    });
+  }
+  return items;
+}
+
+function areAllInquiryExpanded() {
+  return (
+    inquiryModalUnits.length > 0 &&
+    inquiryModalUnits.every((unit) => unit.expanded)
+  );
+}
+
+function syncInquiryExpandToggleBtn() {
+  const btn = document.getElementById("inquiry-toggle-expand");
+  if (!btn) return;
+  btn.textContent = areAllInquiryExpanded() ? "全部收起" : "全部展开";
+}
+
+function toggleInquiryExpandAll() {
+  const expand = !areAllInquiryExpanded();
+  inquiryModalUnits.forEach((unit) => {
+    unit.expanded = expand;
+  });
+  renderInquiryDialog();
+}
+
+function syncInquiryUnitCheckState(unit) {
+  const checkedItems = unit.items.filter((item) => item.checked);
+  unit.unitChecked = checkedItems.length === unit.items.length;
+  unit.indeterminate =
+    checkedItems.length > 0 && checkedItems.length < unit.items.length;
+}
+
+function getInquiryCounts() {
+  let units = 0;
+  let items = 0;
+  inquiryModalUnits.forEach((unit) => {
+    const picked = unit.items.filter((item) => item.checked);
+    if (picked.length > 0) {
+      units += 1;
+      items += picked.length;
+    }
+  });
+  return { units, items };
+}
+
+function findInquiryUnit(bidderId) {
+  return inquiryModalUnits.find((unit) => unit.bidderId === bidderId);
+}
+
+function renderInquiryDialog() {
+  const list = document.getElementById("inquiry-dialog-list");
+  const summary = document.getElementById("inquiry-dialog-summary");
+  if (!list) return;
+
+  list.innerHTML = inquiryModalUnits
+    .map(
+      (unit) => `
+      <div class="inquiry-unit ${unit.expanded ? "is-open" : ""}" data-bidder-id="${unit.bidderId}">
+        <div class="inquiry-unit__head">
+          <input type="checkbox" class="inquiry-unit__check" ${unit.unitChecked ? "checked" : ""} aria-label="选择${escapeHtml(unit.name)}" />
+          <button type="button" class="inquiry-unit__toggle" aria-label="${unit.expanded ? "收起" : "展开"}清单">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M4 2 8 6 4 10V2z"/></svg>
+          </button>
+          <span class="inquiry-unit__name">${escapeHtml(unit.name)}</span>
+          <span class="inquiry-unit__count">${unit.items.filter((i) => i.checked).length}/${unit.items.length}</span>
+        </div>
+        <div class="inquiry-unit__items">
+          ${unit.items
+            .map(
+              (item) => `
+            <div class="inquiry-item">
+              <input type="checkbox" class="inquiry-item__check" data-item-id="${escapeHtml(item.id)}" ${item.checked ? "checked" : ""} aria-label="选择清单 ${escapeHtml(item.code)}" />
+              <span class="inquiry-item__main"><span class="inquiry-item__code">${escapeHtml(item.code)}</span>${escapeHtml(item.name)}</span>
+            </div>`
+            )
+            .join("")}
+        </div>
+      </div>`
+    )
+    .join("");
+
+  list.querySelectorAll(".inquiry-unit").forEach((el) => {
+    const unit = findInquiryUnit(Number(el.dataset.bidderId));
+    const check = el.querySelector(".inquiry-unit__check");
+    if (unit && check) {
+      check.checked = unit.unitChecked;
+      check.indeterminate = unit.indeterminate;
+    }
+  });
+
+  const { units, items } = getInquiryCounts();
+  if (summary) {
+    summary.innerHTML = `已选 <strong>${units}</strong> 家投标单位，共 <strong>${items}</strong> 条清单`;
+  }
+  syncInquiryExpandToggleBtn();
+}
+
+function openInquiryDialog() {
+  const dialog = document.getElementById("inquiry-dialog");
+  if (!dialog) return;
+
+  const selected = bidders.filter((b) => b.checked);
+  if (selected.length === 0) {
+    alert("请先在表格中勾选至少一家投标单位");
+    return;
+  }
+
+  inquiryModalUnits = selected.map((b) => ({
+    bidderId: b.id,
+    name: b.name,
+    expanded: true,
+    unitChecked: true,
+    indeterminate: false,
+    items: buildInquiryItemsForBidder(b),
+  }));
+
+  renderInquiryDialog();
+  if (typeof dialog.showModal === "function") {
+    dialog.showModal();
+  } else {
+    dialog.setAttribute("open", "");
+  }
+}
+
+function closeInquiryDialog() {
+  const dialog = document.getElementById("inquiry-dialog");
+  if (!dialog) return;
+  if (typeof dialog.close === "function") {
+    dialog.close();
+  } else {
+    dialog.removeAttribute("open");
+  }
+}
+
+document.getElementById("inquiry-dialog-list")?.addEventListener("click", (e) => {
+  const toggle = e.target.closest(".inquiry-unit__toggle");
+  if (!toggle) return;
+  const unitEl = toggle.closest(".inquiry-unit");
+  const unit = findInquiryUnit(Number(unitEl?.dataset.bidderId));
+  if (!unit || !unitEl) return;
+  unit.expanded = !unit.expanded;
+  unitEl.classList.toggle("is-open", unit.expanded);
+  toggle.setAttribute("aria-label", unit.expanded ? "收起清单" : "展开清单");
+  syncInquiryExpandToggleBtn();
+});
+
+document.getElementById("inquiry-toggle-expand")?.addEventListener("click", () => {
+  toggleInquiryExpandAll();
+});
+
+document.getElementById("inquiry-dialog-list")?.addEventListener("change", (e) => {
+  const input = e.target;
+  if (input.type !== "checkbox") return;
+
+  const unitEl = input.closest(".inquiry-unit");
+  if (!unitEl) return;
+  const unit = findInquiryUnit(Number(unitEl.dataset.bidderId));
+  if (!unit) return;
+
+  if (input.classList.contains("inquiry-unit__check")) {
+    unit.items.forEach((item) => {
+      item.checked = input.checked;
+    });
+    syncInquiryUnitCheckState(unit);
+    renderInquiryDialog();
+    return;
+  }
+
+  if (input.classList.contains("inquiry-item__check")) {
+    const item = unit.items.find((i) => i.id === input.dataset.itemId);
+    if (item) item.checked = input.checked;
+    syncInquiryUnitCheckState(unit);
+    renderInquiryDialog();
+  }
+});
+
 document.querySelector(".btn--primary")?.addEventListener("click", () => {
-  alert(`将对已选 ${getSelectedCount()} 家投标单位发起质询（演示）`);
+  openInquiryDialog();
+});
+
+document.getElementById("inquiry-dialog-close")?.addEventListener("click", closeInquiryDialog);
+document.getElementById("inquiry-dialog-cancel")?.addEventListener("click", closeInquiryDialog);
+document.getElementById("inquiry-dialog-submit")?.addEventListener("click", () => {
+  const { units, items } = getInquiryCounts();
+  alert(`将生成质询函：${units} 家单位，${items} 条清单（演示）`);
+  closeInquiryDialog();
 });
 
 document.querySelector(".btn--outline")?.addEventListener("click", () => {
-  alert("导出报告（演示）");
+  alert("异常清单明细（演示）");
 });
+
+let reasonTypewriterTimer = null;
+
+function runReasonTypewriter() {
+  const el = document.getElementById("alert-reason-body");
+  if (!el) return;
+
+  const full =
+    el.getAttribute("data-full-text") ||
+    el.dataset.fullText ||
+    el.textContent.trim();
+  if (!full) return;
+
+  if (reasonTypewriterTimer) {
+    clearTimeout(reasonTypewriterTimer);
+    reasonTypewriterTimer = null;
+  }
+
+  el.classList.remove("is-typing", "is-empty");
+
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    el.textContent = full;
+    return;
+  }
+
+  el.textContent = "";
+  el.classList.add("is-typing", "is-empty");
+
+  let i = 0;
+  const step = () => {
+    i += 1;
+    el.textContent = full.slice(0, i);
+    if (i === 1) el.classList.remove("is-empty");
+    if (i < full.length) {
+      reasonTypewriterTimer = setTimeout(step, 42);
+    } else {
+      el.classList.remove("is-typing");
+      reasonTypewriterTimer = null;
+    }
+  };
+  reasonTypewriterTimer = setTimeout(step, 80);
+}
 
 function finishScanAndShow(pool) {
   bidders = pool
@@ -398,6 +838,7 @@ function finishScanAndShow(pool) {
   RECOMMENDED_INQUIRY_COUNT = bidders.filter((b) => b.checked).length;
   listState.page = 1;
   renderRows();
+  setTimeout(() => runReasonTypewriter(), 200);
 }
 
 function runEntryScan() {
@@ -503,4 +944,5 @@ if (document.getElementById("scan-overlay")) {
   });
   RECOMMENDED_INQUIRY_COUNT = bidders.filter((b) => b.checked).length;
   renderRows();
+  setTimeout(() => runReasonTypewriter(), 120);
 }
