@@ -1228,8 +1228,8 @@ function runEntryScan() {
 
 /** 右侧文档区：招标 / 投标均预览演示项目 PDF */
 const DOC_PANEL_SRC = {
-  bidding: "assets/docs/demo-project.pdf",
-  tender: "assets/docs/demo-project.pdf",
+  bidding: "assets/docs/demo-project.pdf?v=20261124-1531",
+  tender: "assets/docs/demo-project.pdf?v=20261124-1531",
 };
 
 function setDocPanelTab(docKey) {
