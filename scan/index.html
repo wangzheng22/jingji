@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>经济标 · 登录</title>
+    <link rel="stylesheet" href="styles.css?v=4e58b9b" />
+  </head>
+  <body class="login-page">
+    <header class="top-bar">
+      <div class="top-bar__inner">
+        <div class="top-bar__brand">
+          <img
+            class="top-bar__logo"
+            src="assets/logo.png"
+            width="18"
+            height="21"
+            alt="广联达"
+          />
+          <img
+            class="top-bar__title-img"
+            src="assets/title.png"
+            width="120"
+            height="16"
+            alt="智能辅助评标"
+          />
+        </div>
+      </div>
+    </header>
+
+    <main class="login-main">
+      <section class="login-card" aria-labelledby="login-title">
+        <h1 id="login-title" class="login-card__title">经济标 · 登录</h1>
+        <p class="login-card__desc">登录后进入智能辅助评标 / 推荐质询单位</p>
+        <form class="login-form" id="login-form" novalidate>
+          <label class="login-field">
+            <span class="login-field__label">账号</span>
+            <input
+              class="login-field__input"
+              type="text"
+              name="account"
+              autocomplete="username"
+              placeholder="请输入账号"
+              required
+            />
+          </label>
+          <label class="login-field">
+            <span class="login-field__label">密码</span>
+            <input
+              class="login-field__input"
+              type="password"
+              name="password"
+              autocomplete="current-password"
+              placeholder="请输入密码"
+              required
+            />
+          </label>
+          <button type="submit" class="btn btn--login-submit">登录</button>
+        </form>
+      </section>
+    </main>
+
+    <script>
+      document.getElementById("login-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        window.location.href = "home.html";
+      });
+    </script>
+  </body>
+</html>
