@@ -1,16 +1,36 @@
-# 经济标 · 扫描动效试验版
+# 经济标 · 智能辅助评标（推荐质询单位）— 试验副本
 
-本目录为试验副本（20 家并行扫描、三家异常入表等），与仓库根目录原版互不影响。
+> **本目录为本地副本**（自 `经济标/` 复制），可随意改动。  
+> 原版与线上仓库不变：`经济标/` → https://github.com/wangzheng22/jingji
 
-- **本版预览**：https://wangzheng22.github.io/jingji/scan/
-- **原版预览**：https://wangzheng22.github.io/jingji/
-- **仓库**：https://github.com/wangzheng22/jingji
+静态演示页：质询建议、投标人卡片表格、分页与勾选联动。可分享给同事本地打开或部署静态页。
 
-本地预览：
+## 上传到 GitHub（分享给同事）
+
+仓库地址：**https://github.com/wangzheng22/jingji**（试验版在仓库的 `scan/` 目录）
+
+**在线预览（推代码后约 1～2 分钟生效）：**  
+- **本试验版**：https://wangzheng22.github.io/jingji/scan/  
+- **原版（对照）**：https://wangzheng22.github.io/jingji/
+
+> 若首次打开 404：到仓库 **Settings → Pages → Build and deployment → Source** 选 **GitHub Actions**，保存后再等一次部署完成。
+
+同事也可克隆后本地预览：
 
 ```bash
-cd scan
-python3 -m http.server 9082 --bind 127.0.0.1
+git clone https://github.com/wangzheng22/jingji.git
+cd jingji
+python3 -m http.server 8080
 ```
 
-打开 http://127.0.0.1:9082/home.html
+浏览器打开 <http://localhost:8080> 即可预览（**默认打开登录页**）。
+
+## 页面结构
+
+| 文件 | 说明 |
+|------|------|
+| `index.html` | **登录页**（入口，提交后进入首页） |
+| `home.html` | 智能辅助评标 / 推荐质询单位（原首页） |
+| `styles.css` | 公共样式 |
+| `app.js` | 首页数据与交互 |
+| `assets/` | 图标与背景资源 |

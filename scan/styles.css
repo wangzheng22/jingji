@@ -171,6 +171,118 @@ button {
   opacity: 1;
 }
 
+.doc-link.is-active {
+  opacity: 1;
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* 主内容 + 右侧文档区 */
+.workspace {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+}
+
+.workspace.is-doc-open .page {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.workspace.is-doc-open .panel--right {
+  display: flex;
+}
+
+.panel.panel--right {
+  display: none;
+  flex: 0 0 50%;
+  width: 50%;
+  min-width: 0;
+  max-width: none;
+  flex-direction: column;
+  min-height: 0;
+  background: #ffffff;
+  border-left: 1px solid #e5eaf2;
+  box-shadow: -4px 0 16px rgba(8, 29, 82, 0.06);
+}
+
+.panel__header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 44px;
+  padding: 0 12px 0 16px;
+  border-bottom: 1px solid #eef1f6;
+  background: #fafbfd;
+}
+
+.doc-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.doc-tabs__item {
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: #595959;
+  font-size: 13px;
+  line-height: 28px;
+  cursor: pointer;
+}
+
+.doc-tabs__item:hover {
+  color: var(--color-primary);
+  background: #e7f3ff;
+}
+
+.doc-tabs__item.is-active {
+  color: #fff;
+  background: var(--color-primary);
+  font-weight: 500;
+}
+
+.panel__close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: #8c8c8c;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.panel__close:hover {
+  background: #f0f0f0;
+  color: #262626;
+}
+
+.panel__body {
+  flex: 1;
+  min-height: 0;
+  background: #e9edf3;
+}
+
+.panel__frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #e9edf3;
+}
+
 /* 进入页：扫描动效（弹窗固定高度，列表内滚动） */
 .scan-overlay {
   position: fixed;
@@ -515,9 +627,9 @@ body.is-scanning-main .page {
 
 .alert-card__actions {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
   flex-shrink: 0;
   margin-left: 0;
 }
@@ -1109,7 +1221,34 @@ body.is-scanning-main .page {
 
 .bid-row .col--breakdown .amount {
   color: inherit;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+/* 表格单元格截断时 hover 完整内容 */
+.bid-cell-tip {
+  position: fixed;
+  z-index: 5200;
+  max-width: min(420px, calc(100vw - 24px));
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: rgba(38, 38, 38, 0.92);
+  color: #fff;
+  font-size: 13px;
+  line-height: 20px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+  transform: translateZ(0);
+}
+
+.bid-cell-tip[hidden] {
+  display: none !important;
+}
+
+.bid-row .col.is-truncated {
+  cursor: default;
 }
 
 /* Table footer & pagination */

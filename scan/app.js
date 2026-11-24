@@ -343,14 +343,14 @@ function renderBreakdownHtml(items) {
   return items
     .map(
       (item) =>
-        `${escapeHtml(item.label)} <span class="amount">${escapeHtml(item.amount)}(${escapeHtml(item.pct)})</span>`
+        `${escapeHtml(item.label)} <strong class="amount">${escapeHtml(item.amount)}万</strong>(<strong class="amount">${escapeHtml(item.pct)}</strong>)`
     )
     .join('<span class="breakdown-sep">；</span>');
 }
 
 function breakdownText(items) {
   return items
-    .map((item) => `${item.label} ${item.amount}(${item.pct})`)
+    .map((item) => `${item.label} ${item.amount}万(${item.pct})`)
     .join("；");
 }
 
@@ -370,32 +370,118 @@ function isCellOverflowing(el) {
   );
 }
 
-function syncRowOverflowTitles(row, bidder) {
-  if (!row || !bidder) return;
+const BID_TIP_COLS =
+  ".col--name, .col--total, .col--abnormal, .col--issues, .col--breakdown";
 
-  const nameText = row.querySelector(".bidder-name-cell__text");
-  const nameCol = row.querySelector(".col--name");
-  if (nameText && nameCol) {
-    if (isCellOverflowing(nameText)) nameCol.title = bidder.name;
-    else nameCol.removeAttribute("title");
+function getOverflowProbe(cell) {
+  if (!cell) return null;
+  if (cell.classList.contains("col--name")) {
+    return cell.querySelector(".bidder-name-cell__text");
   }
+  if (cell.classList.contains("col--issues")) {
+    return cell.querySelector(".col--issues-inner");
+  }
+  if (cell.classList.contains("col--breakdown")) {
+    return cell.querySelector(".col--breakdown-inner");
+  }
+  return cell;
+}
 
-  const pairs = [[".col--issues-inner", bidder.issuesText]];
-  pairs.forEach(([selector, text]) => {
-    const el = row.querySelector(selector);
-    if (!el) return;
-    const cell = el.closest(".col--issues") || el;
-    if (isCellOverflowing(el)) cell.title = text;
-    else cell.removeAttribute("title");
+function getCellFullText(cell, row) {
+  if (!cell || !row) return "";
+  const bidder = bidders.find((x) => x.id === Number(row.dataset.id));
+  if (!bidder) {
+    return (cell.textContent || "").replace(/\s+/g, " ").trim();
+  }
+  if (cell.classList.contains("col--name")) return bidder.name;
+  if (cell.classList.contains("col--total")) return `${bidder.total}万`;
+  if (cell.classList.contains("col--abnormal")) return `${bidder.abnormal}万`;
+  if (cell.classList.contains("col--issues")) return bidder.issuesText || "";
+  if (cell.classList.contains("col--breakdown")) {
+    return breakdownText(bidder.breakdown);
+  }
+  return "";
+}
+
+function ensureBidCellTip() {
+  let tip = document.getElementById("bid-cell-tip");
+  if (tip) return tip;
+  tip = document.createElement("div");
+  tip.id = "bid-cell-tip";
+  tip.className = "bid-cell-tip";
+  tip.hidden = true;
+  tip.setAttribute("role", "tooltip");
+  document.body.appendChild(tip);
+  return tip;
+}
+
+function hideBidCellTip() {
+  const tip = document.getElementById("bid-cell-tip");
+  if (tip) tip.hidden = true;
+}
+
+function showBidCellTip(text, clientX, clientY) {
+  const tip = ensureBidCellTip();
+  tip.textContent = text;
+  tip.hidden = false;
+  const pad = 12;
+  const gap = 14;
+  const tw = tip.offsetWidth;
+  const th = tip.offsetHeight;
+  let left = clientX + gap;
+  let top = clientY + gap;
+  if (left + tw > window.innerWidth - pad) left = clientX - tw - 8;
+  if (top + th > window.innerHeight - pad) top = clientY - th - 8;
+  tip.style.left = `${Math.max(pad, left)}px`;
+  tip.style.top = `${Math.max(pad, top)}px`;
+}
+
+function syncRowOverflowTitles(row) {
+  if (!row) return;
+  row.querySelectorAll(BID_TIP_COLS).forEach((cell) => {
+    cell.removeAttribute("title");
+    const probe = getOverflowProbe(cell);
+    cell.classList.toggle("is-truncated", isCellOverflowing(probe));
+  });
+}
+
+function bindBidCellTip() {
+  const body = document.getElementById("bidder-rows");
+  if (!body || body.dataset.tipBound === "1") return;
+  body.dataset.tipBound = "1";
+
+  body.addEventListener("mousemove", (e) => {
+    const cell = e.target.closest(BID_TIP_COLS);
+    if (!cell || !body.contains(cell)) {
+      hideBidCellTip();
+      return;
+    }
+    const row = cell.closest(".bid-row");
+    const probe = getOverflowProbe(cell);
+    const overflowing = isCellOverflowing(probe);
+    cell.classList.toggle("is-truncated", overflowing);
+    if (!overflowing) {
+      hideBidCellTip();
+      return;
+    }
+    const text = getCellFullText(cell, row);
+    if (!text) {
+      hideBidCellTip();
+      return;
+    }
+    showBidCellTip(text, e.clientX, e.clientY);
   });
 
-  const breakdownCell = row.querySelector(".col--breakdown");
-  const breakdownInner = row.querySelector(".col--breakdown-inner");
-  if (breakdownCell && breakdownInner) {
-    const full = breakdownText(bidder.breakdown);
-    if (isCellOverflowing(breakdownInner)) breakdownCell.title = full;
-    else breakdownCell.removeAttribute("title");
-  }
+  body.addEventListener("mouseleave", hideBidCellTip);
+  document
+    .getElementById("bid-table-scroll")
+    ?.addEventListener("scroll", hideBidCellTip, { passive: true });
+  window.addEventListener("resize", () => {
+    hideBidCellTip();
+    document.querySelectorAll("#bidder-rows .bid-row").forEach((row) => {
+      syncRowOverflowTitles(row);
+    });
+  });
 }
 
 function getTotalPages() {
@@ -577,8 +663,8 @@ function renderRows() {
           <span class="bidder-name-cell__text">${escapeHtml(b.name)}</span>
         </span>
       </div>
-      <div class="col col--total">${escapeHtml(b.total)}</div>
-      <div class="col col--abnormal">${escapeHtml(b.abnormal)}</div>
+      <div class="col col--total">${escapeHtml(b.total)}万</div>
+      <div class="col col--abnormal">${escapeHtml(b.abnormal)}万</div>
       <div class="col col--issues">
         <div class="col--issues-inner">${b.issuesHtml}</div>
       </div>
@@ -590,20 +676,20 @@ function renderRows() {
     )
     .join("");
 
+  bindBidCellTip();
   requestAnimationFrame(() => {
     const rowEls = container.querySelectorAll(".bid-row");
-    rowEls.forEach((row) => {
-      const id = Number(row.dataset.id);
-      const bidder = bidders.find((x) => x.id === id);
-      syncRowOverflowTitles(row, bidder);
-    });
+    rowEls.forEach((row) => syncRowOverflowTitles(row));
     if (motionOk && rowEls.length > 0) {
       const stagger = 56;
       const duration = 560;
       const lastEnd =
         (rowEls.length - 1) * stagger + duration + 40;
       setTimeout(() => {
-        rowEls.forEach((row) => row.classList.remove("bid-row--enter"));
+        rowEls.forEach((row) => {
+          row.classList.remove("bid-row--enter");
+          syncRowOverflowTitles(row);
+        });
       }, lastEnd);
     }
   });
@@ -1139,6 +1225,87 @@ function runEntryScan() {
     runScanSteps();
   });
 }
+
+/** 右侧文档区：招标 / 投标均预览演示项目 PDF */
+const DOC_PANEL_SRC = {
+  bidding: "assets/docs/demo-project.pdf",
+  tender: "assets/docs/demo-project.pdf",
+};
+
+function setDocPanelTab(docKey) {
+  const key = DOC_PANEL_SRC[docKey] ? docKey : "bidding";
+  const frame = document.getElementById("doc-panel-frame");
+  const src = DOC_PANEL_SRC[key];
+
+  document.querySelectorAll(".doc-tabs__item").forEach((btn) => {
+    const active = btn.dataset.doc === key;
+    btn.classList.toggle("is-active", active);
+    btn.setAttribute("aria-selected", active ? "true" : "false");
+  });
+
+  document.querySelectorAll(".doc-link[data-doc]").forEach((link) => {
+    link.classList.toggle("is-active", link.dataset.doc === key);
+  });
+
+  if (frame && src) {
+    const next = `${src}#toolbar=1`;
+    if (!frame.getAttribute("src") || !frame.getAttribute("src").startsWith(src)) {
+      frame.setAttribute("src", next);
+    }
+  }
+}
+
+function refreshAllRowOverflowTitles() {
+  hideBidCellTip();
+  requestAnimationFrame(() => {
+    document.querySelectorAll("#bidder-rows .bid-row").forEach((row) => {
+      syncRowOverflowTitles(row);
+    });
+  });
+}
+
+function openDocPanel(docKey) {
+  const panel = document.getElementById("doc-panel");
+  const workspace = document.getElementById("workspace");
+  if (!panel || !workspace) return;
+
+  panel.hidden = false;
+  workspace.classList.add("is-doc-open");
+  setDocPanelTab(docKey);
+  refreshAllRowOverflowTitles();
+}
+
+function closeDocPanel() {
+  const panel = document.getElementById("doc-panel");
+  const workspace = document.getElementById("workspace");
+  const frame = document.getElementById("doc-panel-frame");
+  if (panel) panel.hidden = true;
+  if (workspace) workspace.classList.remove("is-doc-open");
+  document.querySelectorAll(".doc-link[data-doc]").forEach((link) => {
+    link.classList.remove("is-active");
+  });
+  if (frame) frame.removeAttribute("src");
+  refreshAllRowOverflowTitles();
+}
+
+document.querySelectorAll(".doc-link[data-doc]").forEach((link) => {
+  link.addEventListener("click", (e) => {
+    e.preventDefault();
+    openDocPanel(link.dataset.doc);
+  });
+});
+
+document.querySelectorAll(".doc-tabs__item").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    openDocPanel(btn.dataset.doc);
+  });
+});
+
+document.getElementById("doc-panel-close")?.addEventListener("click", closeDocPanel);
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeDocPanel();
+});
 
 if (document.getElementById("scan-overlay")) {
   runEntryScan();

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>经济标 · 智能辅助评标 - 推荐质询单位</title>
-    <link rel="stylesheet" href="styles.css?v=scan-batch" />
+    <link rel="stylesheet" href="styles.css?v=cell-tip" />
   </head>
   <body>
     <div
@@ -43,11 +43,17 @@
             alt="智能辅助评标"
           />
           <span class="top-bar__project"
-            >北京信息科技大学新校区建设工程第一教学组团项目幕墙工程</span
+            >[演示项目]北京信息科技大学新校区建设工程第一教学组团项目幕墙工程</span
           >
         </div>
         <nav class="top-bar__actions">
-          <a href="#" class="doc-link">
+          <a
+            href="#"
+            class="doc-link"
+            id="doc-link-bidding"
+            data-doc="bidding"
+            aria-controls="doc-panel"
+          >
             <img
               class="doc-link__icon"
               src="assets/icon-bid-doc.png"
@@ -57,7 +63,13 @@
             />
             招标文件
           </a>
-          <a href="#" class="doc-link">
+          <a
+            href="#"
+            class="doc-link"
+            id="doc-link-tender"
+            data-doc="tender"
+            aria-controls="doc-panel"
+          >
             <img
               class="doc-link__icon"
               src="assets/icon-tender-doc.png"
@@ -71,6 +83,7 @@
       </div>
     </header>
 
+    <div class="workspace" id="workspace">
     <main class="page">
       <section class="alert-card">
         <div class="alert-card__bg" aria-hidden="true"></div>
@@ -131,21 +144,6 @@
             <button
               type="button"
               class="btn btn--outline"
-              id="btn-alert-list-detail"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path
-                  d="M8 2v8m0 0l3-3m-3 3L5 7M3 12v1a1 1 0 001 1h8a1 1 0 001-1v-1"
-                  stroke="currentColor"
-                  stroke-width="1.4"
-                  stroke-linecap="round"
-                />
-              </svg>
-              异常清单明细
-            </button>
-            <button
-              type="button"
-              class="btn btn--outline"
               id="btn-alert-price-lib"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -157,6 +155,21 @@
                 />
               </svg>
               价格库
+            </button>
+            <button
+              type="button"
+              class="btn btn--outline"
+              id="btn-alert-list-detail"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path
+                  d="M8 2v8m0 0l3-3m-3 3L5 7M3 12v1a1 1 0 001 1h8a1 1 0 001-1v-1"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                />
+              </svg>
+              异常清单明细
             </button>
           </div>
         </div>
@@ -233,6 +246,55 @@
       </section>
     </main>
 
+    <aside
+      id="doc-panel"
+      class="panel panel--right"
+      hidden
+      aria-label="文档预览"
+    >
+      <div class="panel__header">
+        <div class="doc-tabs" role="tablist" aria-label="文档类型">
+          <button
+            type="button"
+            class="doc-tabs__item is-active"
+            role="tab"
+            id="doc-tab-bidding"
+            data-doc="bidding"
+            aria-selected="true"
+          >
+            招标文件
+          </button>
+          <button
+            type="button"
+            class="doc-tabs__item"
+            role="tab"
+            id="doc-tab-tender"
+            data-doc="tender"
+            aria-selected="false"
+          >
+            投标文件
+          </button>
+        </div>
+        <button
+          type="button"
+          class="panel__close"
+          id="doc-panel-close"
+          aria-label="关闭文档区"
+        >
+          ×
+        </button>
+      </div>
+      <div class="panel__body">
+        <iframe
+          id="doc-panel-frame"
+          class="panel__frame"
+          title="文档预览"
+          src=""
+        ></iframe>
+      </div>
+    </aside>
+    </div>
+
     <dialog
       id="inquiry-dialog"
       class="inquiry-dialog"
@@ -282,6 +344,6 @@
       </div>
     </dialog>
 
-    <script src="app.js?v=scan-batch"></script>
+    <script src="app.js?v=cell-tip"></script>
   </body>
 </html>
